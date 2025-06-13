@@ -1,51 +1,57 @@
-import React, { Component } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 import './Modal.css';
 
-const modalRoot = document.querySelector('#root'); // Це ID елемента в index.html
+export const Modal = ({ onClose, imageURL, imageTags }) => {
+  const handleKeyDown = useCallback(
+    e => {
+      if (e.code === 'Escape') {
+        onClose();
+      }
+    },
+    [onClose]
+  );
 
-export class Modal extends Component {
-  static propTypes = {
-    onClose: PropTypes.func.isRequired,
-    imageURL: PropTypes.string.isRequired,
-    imageTags: PropTypes.string.isRequired,
-  };
+  const handleOverlayClick = useCallback(
+    e => {
+      if (e.currentTarget === e.target) {
+        onClose();
+      }
+    },
+    [onClose]
+  );
 
-  componentDidMount() {
-    window.addEventListener('keydown', this.handleKeyDown);
-  }
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [handleKeyDown]);
 
-  componentWillUnmount() {
-    window.removeEventListener('keydown', this.handleKeyDown);
-  }
+  const modalRoot = document.querySelector('#root');
 
-  handleKeyDown = e => {
-    if (e.code === 'Escape') {
-      this.props.onClose();
-    }
-  };
-
-  handleOverlayClick = e => {
-    if (e.currentTarget === e.target) {
-      this.props.onClose();
-    }
-  };
-
-  render() {
-    const { imageURL, imageTags } = this.props;
-
-    return createPortal(
-      <div className="Overlay" onClick={this.handleOverlayClick}>
-        <div className="Modal">
-          <img src={imageURL} alt={imageTags} />
-        </div>
-      </div>,
-      modalRoot
+  if (!modalRoot) {
+    console.error(
+      'Target container for modal not found: #root. Please ensure it exists in your index.html'
     );
+    return null;
   }
-}
 
+  return createPortal(
+    <div className="Overlay" onClick={handleOverlayClick}>
+      <div className="Modal">
+        <img src={imageURL} alt={imageTags} />
+      </div>
+    </div>,
+    modalRoot
+  );
+};
+Modal.propTypes = {
+  onClose: PropTypes.func.isRequired,
+  imageURL: PropTypes.string.isRequired,
+  imageTags: PropTypes.string.isRequired,
+};
 export default Modal;
 
 // import React, { Component } from 'react';
